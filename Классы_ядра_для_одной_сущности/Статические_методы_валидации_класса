@@ -1,12 +1,5 @@
 class Student:
     def __init__(self, student_id: int, first_name: str, last_name: str, patronymic: str, address: str, phone: str):
-        # Проверка и установка всех полей через сеттеры
-        self.student_id = student_id
-        self.first_name = first_name
-        self.last_name = last_name
-        self.patronymic = patronymic
-        self.address = address
-        self.phone = phone
 
     # Статические методы валидации
 
@@ -63,51 +56,7 @@ class Student:
             raise ValueError("Телефон должен соответствовать формату: 8 (***) ***-**-**.")
         return phone.strip()
 
-    # Геттеры и Сеттеры с использованием свойств
-
-    @property
-    def student_id(self):
-        return self.__student_id
-
-    @student_id.setter
-    def student_id(self, value: int):
-        self.__student_id = self.validate_student_id(value)
-
-    @property
-    def first_name(self):
-        return self.__first_name
-
-    @first_name.setter
-    def first_name(self, value: str):
-        self.__first_name = self.validate_first_name(value)
-
-    @property
-    def last_name(self):
-        return self.__last_name
-
-    @last_name.setter
-    def last_name(self, value: str):
-        self.__last_name = self.validate_last_name(value)
-
-    @property
-    def patronymic(self):
-        return self.__patronymic
-
-    @patronymic.setter
-    def patronymic(self, value: str):
-        self.__patronymic = self.validate_patronymic(value)
-
-    @property
-    def address(self):
-        return self.__address
-
-    @address.setter
-    def address(self, value: str):
-        self.__address = self.validate_address(value)
-
-    @property
-    def phone(self):
-        return self.__phone
+    # Использование свойств
 
     @phone.setter
     def phone(self, value: str):
