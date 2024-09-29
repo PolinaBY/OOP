@@ -1,0 +1,38 @@
+  @staticmethod
+    def from_string(student_str: str):
+        
+       # Создание объекта студента из строки формата: "ID, Имя, Фамилия, Отчество, Адрес, Телефон"
+        
+        try:
+            parts = student_str.split(',')
+            if len(parts) != 6:
+                raise ValueError("Строка должна содержать 6 элементов, разделённых запятыми.")
+            student_id = int(parts[0].strip())
+            first_name = parts[1].strip()
+            last_name = parts[2].strip()
+            patronymic = parts[3].strip()
+            address = parts[4].strip()
+            phone = parts[5].strip()
+            return Student(student_id, first_name, last_name, patronymic, address, phone)
+        except Exception as e:
+            raise ValueError(f"Ошибка при создании студента из строки: {e}")
+
+    @classmethod
+    def from_json(cls, json_str: str):
+        
+        # Создание объекта студента из JSON-строки
+
+        try:
+            data = json.loads(json_str)
+            return cls(
+                student_id=data['student_id'],
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                patronymic=data.get('patronymic', ''),
+                address=data['address'],
+                phone=data['phone']
+            )
+        except json.JSONDecodeError:
+            raise ValueError("Некорректный формат JSON.")
+        except KeyError as e:
+            raise ValueError(f"Отсутствует необходимое поле в JSON: {e}")
