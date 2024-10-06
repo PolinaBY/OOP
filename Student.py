@@ -1,3 +1,5 @@
+import re
+import json
 class Student:
     def __init__(self, student_id: int, first_name: str, last_name: str, patronymic: str, address: str, phone: str):
         # Поля инкапсулированы
@@ -131,3 +133,27 @@ class Student:
             raise ValueError("Некорректный формат JSON.")
         except KeyError as e:
             raise ValueError(f"Отсутствует необходимое поле в JSON: {e}")
+
+    # Методы для вывода информации
+    def __str__(self):
+        """Полная версия информации о студенте"""
+        return (f"Студент {self.__last_name} {self.__first_name} {self.__patronymic}, "
+                f"ID: {self.__student_id}, Адрес: {self.__address}, Телефон: {self.__phone}")
+    def brief_info(self):
+        """Краткая версия информации о студенте"""
+        return (f"ID: {self.__student_id}, "
+                f"Имя: {self.__first_name} {self.__last_name}, "
+                f"Телефон: {self.__phone}")
+        
+    # Метод для сравнения объектов на равенство
+    def __eq__(self, other):
+        if not isinstance(other, Student):
+            return NotImplemented
+        return (self.student_id == other.student_id and
+                self.first_name == other.first_name and
+                self.last_name == other.last_name and
+                self.patronymic == other.patronymic and
+                self.address == other.address and
+                self.phone == other.phone)
+    except (ValueError, TypeError) as e:
+        print(f"Ошибка: {e}")
