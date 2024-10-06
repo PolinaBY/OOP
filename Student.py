@@ -7,26 +7,6 @@ class Student:
         self.__patronymic = patronymic
         self.__address = address
         self.__phone = phone
-    # Геттеры 
-    
-    @property
-    def student_id(self):
-        return self.__student_id
-    @property
-    def first_name(self):
-        return self.__first_name
-    @property
-    def last_name(self):
-        return self.__last_name
-    @property
-    def patronymic(self):
-        return self.__patronymic
-    @property
-    def address(self):
-        return self.__address
-    @property
-    def phone(self):
-        return self.__phone
         
     # Статические методы валидации
     @staticmethod
