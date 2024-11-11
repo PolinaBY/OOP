@@ -27,6 +27,8 @@ class StudentBase:
             raise TypeError("Имя должно быть строкой.")
         if not first_name.strip():
             raise ValueError("Имя должно быть непустой строкой.")
+        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ\s-]+$", first_name):
+            raise ValueError("Имя должно содержать только буквы, пробелы или дефисы и не должно включать цифры или специальные символы.")
         return first_name.strip().title()
     @staticmethod
     def validate_last_name(last_name: str):
