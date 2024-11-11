@@ -140,11 +140,7 @@ class StudentBase:
     def __eq__(self, other):
         if not isinstance(other, StudentBase):
             return NotImplemented
-        return (self.student_id == other.student_id and
-                self.first_name == other.first_name and
-                self.last_name == other.last_name and
-                self.patronymic == other.patronymic and
-                self.phone == other.phone)
+        return (self.phone == other.phone)
 
 
 class Student:
@@ -228,13 +224,6 @@ class Student:
         return (f"ID: {self.__student_id}, "
                 f"Имя: {self.__first_name} {self.__last_name}, "
                 f"Телефон: {self.__phone}")
-        
-    # Метод для сравнения объектов на равенство
-    def __eq__(self, other):
-        if not isinstance(other, Student):
-            return NotImplemented
-         return (super().__eq__(other) and
-                self.address == other.address)
 
 
 class StudentBrief(StudentBase):
@@ -272,9 +261,3 @@ class StudentBrief(StudentBase):
     def brief_info(self):
         """Краткая версия информации о StudentBrief"""
         return f"ID: {self.student_id}, Имя: {self.get_brief_name()}, Телефон: {self.phone}"
-    def __eq__(self, other):
-        if not isinstance(other, StudentBrief):
-            return NotImplemented
-        return (self.student_id == other.student_id and
-                self.get_brief_name() == other.get_brief_name() and
-                self.phone == other.phone)
