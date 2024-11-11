@@ -6,7 +6,7 @@ class StudentBase:
     Базовый класс для представления студента.
     Содержит общие атрибуты и методы для валидации.
     """
-    def __init__(self, student_id: int, first_name: str, last_name: str, patronymic: str, phone: str):
+    def __init__(self, student_id: int = None, first_name: str, last_name: str, patronymic: str, phone: str):
         self.student_id = student_id
         self.first_name = first_name
         self.last_name = last_name
@@ -16,10 +16,9 @@ class StudentBase:
     # Статические методы валидации
     @staticmethod
     def validate_student_id(student_id: int):
-        if not isinstance(student_id, int):
-            raise TypeError("ID студента должен быть целым числом.")
-        if student_id <= 0:
-            raise ValueError("ID студента должен быть положительным целым числом.")
+        if student_id is not None:
+            if not isinstance(student_id, int) or student_id <= 0:
+                raise ValueError("ID студента должен быть положительным целым числом.")
         return student_id
     @staticmethod
     def validate_first_name(first_name: str):
@@ -116,7 +115,7 @@ class StudentBase:
         try:
             data = json.loads(json_str)
             return cls(
-                student_id=data['student_id'],
+                student_id=data.get('student_id'),
                 first_name=data['first_name'],
                 last_name=data['last_name'],
                 patronymic=data.get('patronymic', ''),
@@ -124,8 +123,6 @@ class StudentBase:
             )
         except json.JSONDecodeError:
             raise ValueError("Некорректный формат JSON.")
-        except KeyError as e:
-            raise ValueError(f"Отсутствует необходимое поле в JSON: {e}")
             
     # Методы для вывода информации
     def __str__(self):
@@ -148,7 +145,7 @@ class Student:
     Класс для представления полного студента, наследуется от StudentBase.
     Добавляет атрибут 'address'.
     """
-    def __init__(self, student_id: int, first_name: str, last_name: str, patronymic: str, address: str, phone: str):
+    def __init__(self, student_id: int = None, first_name: str, last_name: str, patronymic: str, address: str, phone: str):
         # Поля инкапсулированы
         super().__init__(student_id, first_name, last_name, patronymic, phone)
         self.__address = address
@@ -171,7 +168,6 @@ class Student:
         self.__address = self.validate_address(value)
 
  @staticmethod
-    def from_string(student_str: str):
         
        # Переопределение методов создания объекта из строки и JSON
          @staticmethod
@@ -185,12 +181,8 @@ class Student:
             parts = student_str.split(',')
             if len(parts) != 6:
                 raise ValueError("Строка должна содержать 6 элементов, разделённых запятыми.")
-            student_id = int(parts[0].strip())
-            first_name = parts[1].strip()
-            last_name = parts[2].strip()
-            patronymic = parts[3].strip()
-            address = parts[4].strip()
-            phone = parts[5].strip()
+            student_id = int(parts[0].strip()) if parts[0].strip() else None
+            first_name, last_name, patronymic, address, phone = map(str.strip, parts[1:])
             return Student(student_id, first_name, last_name, patronymic, address, phone)
         except Exception as e:
             raise ValueError(f"Ошибка при создании студента из строки: {e}")
