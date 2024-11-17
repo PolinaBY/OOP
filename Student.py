@@ -13,47 +13,52 @@ class StudentBase:
         self.patronymic = patronymic
         self.phone = phone
         
-    # Статические методы валидации
+    # Статические методы валидации  
     @staticmethod
-    def validate_student_id(student_id: int):
+    def validate_student_id(student_id: int) -> bool:
         if student_id is not None:
-            if not isinstance(student_id, int) or student_id <= 0:
-                raise ValueError("ID студента должен быть положительным целым числом.")
-        return student_id
+            return False
+        if not isinstance(student_id, int) or student_id <= 0:
+            return False
+        return True
     @staticmethod
-    def validate_first_name(first_name: str):
+    def validate_first_name(first_name: str) -> bool:
         if not isinstance(first_name, str):
-            raise TypeError("Имя должно быть строкой.")
+            return False
         if not first_name.strip():
-            raise ValueError("Имя должно быть непустой строкой.")
+            return False
         if not re.match(r"^[a-zA-Zа-яА-ЯёЁ\s-]+$", first_name):
-            raise ValueError("Имя должно содержать только буквы, пробелы или дефисы и не должно включать цифры или специальные символы.")
-        return first_name.strip().title()
+            return False
+        return True
     @staticmethod
-    def validate_last_name(last_name: str):
+    def validate_last_name(last_name: str) -> bool:
         if not isinstance(last_name, str):
-            raise TypeError("Фамилия должна быть строкой.")
+            return False
         if not last_name.strip():
-            raise ValueError("Фамилия должна быть непустой строкой.")
-        return last_name.strip().title()
+            return False
+        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ\s-]+$", first_name):
+            return False
+        return True
     @staticmethod
-    def validate_patronymic(patronymic: str):
+    def validate_patronymic(patronymic: str) -> bool:
         if not isinstance(patronymic, str):
-            raise TypeError("Отчество должно быть строкой.")
+            return False
         if not patronymic.strip():
-            raise ValueError("Отчество должно быть непустой строкой.")
-        return patronymic.strip().title()
+            return False
+        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ\s-]+$", first_name):
+            return False
+        return True
     @staticmethod
-    def validate_phone(phone: str):
+    def validate_phone(phone: str) -> bool:
         if not isinstance(phone, str):
-            raise TypeError("Телефон должен быть строкой.")
+            return False
         if not phone.strip():
-            raise ValueError("Телефон должен быть непустой строкой.")
+            return False
         # Проверка соответствия формату 8 (***) ***-**-**
         pattern = re.compile(r"^8 \(\d{3}\) \d{3}-\d{2}-\d{2}$")
         if not pattern.match(phone.strip()):
-            raise ValueError("Телефон должен соответствовать формату: 8 (***) ***-**-**.")
-        return phone.strip()
+            return False
+        return True
         
     # Свойства
     @property
