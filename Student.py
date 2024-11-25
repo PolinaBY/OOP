@@ -110,6 +110,13 @@ class StudentBase:
         return (f"Студент {self.last_name} {self.first_name} {self.patronymic}, "
                 f"ID: {self.student_id}, Телефон: {self.phone}")
 
+    def __eq__(self, other):
+        if not isinstance(other, StudentBase):
+            return NotImplemented
+        return (self.student_id == other.student_id and
+                self.phone == other.phone)
+        return (self.phone == other.phone)
+
 
 class Student(StudentBase):
     """Класс для представления студента с адресом."""
