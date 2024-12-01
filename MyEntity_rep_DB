@@ -1,73 +1,67 @@
 import mysql.connector
 
 class MyEntity_rep_DB:
-    def __init__(self, host, user, password, database):
-        # Подключение к базе данных
-        self.conn = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
-        )
-        self.cursor = self.conn.cursor(dictionary=True)
+    def __init__(self, db_connection: DatabaseConnection):
+        self.db = db_connection
 
     def get_by_id(self, entity_id):
         """Получить объект по ID."""
         query = "SELECT * FROM my_entity WHERE id = %s"
-        self.cursor.execute(query, (entity_id,))
-        return self.cursor.fetchone()
+        result = self.db.execute_query(query, (entity_id,)).fetchone()
+        return result
 
     def get_k_n_short_list(self, k, n):
         """Получить k по счету n объектов (например, вторые 20)."""
         offset = (k - 1) * n
         query = "SELECT * FROM my_entity ORDER BY id LIMIT %s OFFSET %s"
-        self.cursor.execute(query, (n, offset))
-        return self.cursor.fetchall()
+        result = self.db.execute_query(query, (n, offset)).fetchall()
+        return result
 
     def add_entity(self, entity_data):
         """Добавить объект в список и сформировать новый ID."""
         columns = ", ".join(entity_data.keys())
         placeholders = ", ".join(["%s"] * len(entity_data))
         query = f"INSERT INTO my_entity ({columns}) VALUES ({placeholders})"
-        self.cursor.execute(query, tuple(entity_data.values()))
-        self.conn.commit()
-        return self.cursor.lastrowid
+        self.db.execute_query(query, tuple(entity_data.values()))
+        self.db.commit()
+        return self.db.cursor.lastrowid
 
     def update_by_id(self, entity_id, updated_data):
         """Заменить элемент списка по ID."""
         set_clause = ", ".join([f"{key} = %s" for key in updated_data.keys()])
         query = f"UPDATE my_entity SET {set_clause} WHERE id = %s"
-        self.cursor.execute(query, tuple(updated_data.values()) + (entity_id,))
-        self.conn.commit()
-        return self.cursor.rowcount
+        self.db.execute_query(query, tuple(updated_data.values()) + (entity_id,))
+        self.db.commit()
+        return self.db.cursor.rowcount
 
     def delete_by_id(self, entity_id):
         """Удалить элемент списка по ID."""
         query = "DELETE FROM my_entity WHERE id = %s"
-        self.cursor.execute(query, (entity_id,))
-        self.conn.commit()
-        return self.cursor.rowcount
+        self.db.execute_query(query, (entity_id,))
+        self.db.commit()
+        return self.db.cursor.rowcount
 
     def get_count(self):
         """Получить количество элементов."""
         query = "SELECT COUNT(*) as count FROM my_entity"
-        self.cursor.execute(query)
-        return self.cursor.fetchone()["count"]
+        result = self.db.execute_query(query).fetchone()
+        return result["count"]
 
     def close(self):
         """Закрыть соединение с базой данных."""
-        self.cursor.close()
-        self.conn.close()
+        self.db.close()
 
 # Пример использования
 if __name__ == "__main__":
     # Инициализация репозитория
-    repo = MyEntity_rep_DB(
+   db_connection = DatabaseConnection(
         host="localhost",
         user="your_username",
         password="your_password",
         database="your_database"
     )
+
+    repo = MyEntity_rep_DB(db_connection)
 
     # Пример получения объекта по ID
     print(repo.get_by_id(1))
@@ -91,4 +85,4 @@ if __name__ == "__main__":
     print(f"Total count: {repo.get_count()}")
 
     # Закрытие соединения
-    repo.close()
+    db_connection.close()
