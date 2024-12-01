@@ -1,0 +1,37 @@
+import mysql.connector
+
+class DatabaseConnection:
+    """Класс для управления соединением с базой данных (Singleton)."""
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, host, user, password, database):
+        if not hasattr(self, "_initialized"):  # Убедиться, что инициализация происходит один раз
+            self.conn = mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=database
+            )
+            self.cursor = self.conn.cursor(dictionary=True)
+            self._initialized = True  # Флаг для предотвращения повторной инициализации
+
+    def execute_query(self, query, params=None):
+        """Выполняет запрос к базе данных."""
+        self.cursor.execute(query, params or ())
+        return self.cursor
+
+    def commit(self):
+        """Применить изменения."""
+        self.conn.commit()
+
+    def close(self):
+        """Закрыть соединение с базой данных."""
+        self.cursor.close()
+        self.conn.close()
+        del self._initialized
+        type(self)._instance = None  # Сбрасываем Singleton для возможности повторного создания
