@@ -1,4 +1,51 @@
 import mysql.connector
+from abc import ABC, abstractmethod
+
+# Базовый интерфейс для всех репозиториев
+class EntityRepository(ABC):
+    @abstractmethod
+    def get_by_id(self, entity_id):
+        pass
+
+    @abstractmethod
+    def get_all(self):
+        pass
+
+    @abstractmethod
+    def add(self, entity_data):
+        pass
+
+    @abstractmethod
+    def update(self, entity_id, updated_data):
+        pass
+
+    @abstractmethod
+    def delete(self, entity_id):
+        pass
+
+class MyEntityAdapter(EntityRepository):
+    def __init__(self, adapted_class):
+        self.adapted = adapted_class
+
+    def get_by_id(self, entity_id):
+        """Адаптирует метод get_by_id."""
+        return self.adapted.get_by_id(entity_id)
+
+    def get_all(self):
+        """Адаптирует метод get_k_n_short_list для получения всех объектов."""
+        return self.adapted.get_k_n_short_list(k=1, n=self.adapted.get_count())
+
+    def add(self, entity_data):
+        """Адаптирует метод add_entity."""
+        return self.adapted.add_entity(entity_data)
+
+    def update(self, entity_id, updated_data):
+        """Адаптирует метод update_by_id."""
+        return self.adapted.update_by_id(entity_id, updated_data)
+
+    def delete(self, entity_id):
+        """Адаптирует метод delete_by_id."""
+        return self.adapted.delete_by_id(entity_id)
 
 class MyEntity_rep_DB:
     def __init__(self, db_connection: DatabaseConnection):
@@ -51,38 +98,26 @@ class MyEntity_rep_DB:
         """Закрыть соединение с базой данных."""
         self.db.close()
 
-# Пример использования
 if __name__ == "__main__":
-    # Инициализация репозитория
-   db_connection = DatabaseConnection(
+    # Инициализация соединения с БД
+    db_connection = DatabaseConnection(
         host="localhost",
         user="your_username",
         password="your_password",
         database="your_database"
     )
 
-    repo = MyEntity_rep_DB(db_connection)
+    # Инициализация адаптируемого класса
+    my_entity_repo = MyEntity_rep_DB(db_connection)
 
-    # Пример получения объекта по ID
-    print(repo.get_by_id(1))
+    # Оборачивание адаптером
+    adapted_repo = MyEntityAdapter(my_entity_repo)
 
-    # Получение вторых 10 элементов
-    print(repo.get_k_n_short_list(2, 10))
+    # Использование адаптированного класса
+    print(adapted_repo.get_by_id(1))  # Получить объект по ID
+    print(adapted_repo.get_all())     # Получить все объекты
+    new_id = adapted_repo.add({"name": "Test Entity", "value": 42})
+    print(f"Добавлен объект с ID: {new_id}")
+    adapted_repo.update(new_id, {"name": "Updated Test Entity", "value": 99})
+    adapted_repo.delete(new_id)
 
-    # Добавление нового объекта
-    new_id = repo.add_entity({"name": "Example", "value": 123})
-    print(f"Added entity with ID: {new_id}")
-
-    # Обновление объекта
-    rows_updated = repo.update_by_id(new_id, {"name": "Updated Example", "value": 456})
-    print(f"Updated rows: {rows_updated}")
-
-    # Удаление объекта
-    rows_deleted = repo.delete_by_id(new_id)
-    print(f"Deleted rows: {rows_deleted}")
-
-    # Получение количества объектов
-    print(f"Total count: {repo.get_count()}")
-
-    # Закрытие соединения
-    db_connection.close()
