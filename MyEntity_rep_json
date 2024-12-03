@@ -1,90 +1,17 @@
 import json
 
-class MyEntityRepJson:
-    """Класс для работы с объектами Student и хранения данных в JSON."""
+class MyEntityRepJson(MyEntityRepBase):
+    """Репозиторий для работы с JSON."""
 
-    def __init__(self, file_path: str):
-        """
-        Инициализация объекта для работы с JSON-файлом.
-        :param file_path: Путь к JSON-файлу.
-        """
-        self.file_path = file_path
-        self.data = []
-        self._load()
-
-    def _load(self):
-        """Читает данные из JSON-файла."""
+    def load_data(self):
+        """Загрузка данных из JSON файла."""
         try:
             with open(self.file_path, 'r', encoding='utf-8') as file:
                 self.data = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError:
             self.data = []
 
-    def _save(self):
-        """Записывает данные в JSON-файл."""
+    def save_data(self):
+        """Сохранение данных в JSON файл."""
         with open(self.file_path, 'w', encoding='utf-8') as file:
             json.dump(self.data, file, ensure_ascii=False, indent=4)
-
-    def get_all(self):
-        """Возвращает все элементы из JSON."""
-        return self.data
-
-    def get_by_id(self, entity_id: int):
-        """Возвращает объект по ID."""
-        for item in self.data:
-            if item.get('student_id') == entity_id:
-                return item
-        return None
-
-    def get_k_n_short_list(self, k: int, n: int):
-        """
-        Возвращает k объектов начиная с n-ой позиции.
-        :param k: Количество объектов для получения.
-        :param n: Номер первого объекта (начиная с 0).
-        :return: Список из k объектов.
-        """
-        return self.data[n:n + k]
-
-    def sort_by_field(self, field: str):
-        """
-        Сортирует список объектов по указанному полю.
-        :param field: Поле, по которому будет производиться сортировка.
-        """
-        self.data.sort(key=lambda x: x.get(field))
-        self._save()
-
-    def add_entity(self, entity: dict):
-        """
-        Добавляет объект в список, присваивая новый уникальный ID.
-        :param entity: Словарь с данными нового объекта.
-        """
-        max_id = max([item.get('student_id', 0) for item in self.data], default=0)
-        entity['student_id'] = max_id + 1
-        self.data.append(entity)
-        self._save()
-
-    def replace_by_id(self, entity_id: int, new_entity: dict):
-        """
-        Заменяет объект в списке по ID.
-        :param entity_id: ID объекта для замены.
-        :param new_entity: Новый объект для замены.
-        """
-        for i, item in enumerate(self.data):
-            if item.get('student_id') == entity_id:
-                new_entity['student_id'] = entity_id  # Сохраняем ID
-                self.data[i] = new_entity
-                self._save()
-                return
-        raise ValueError(f"Элемент с ID {entity_id} не найден.")
-
-    def delete_by_id(self, entity_id: int):
-        """
-        Удаляет объект из списка по ID.
-        :param entity_id: ID объекта для удаления.
-        """
-        self.data = [item for item in self.data if item.get('student_id') != entity_id]
-        self._save()
-
-    def get_count(self):
-        """Возвращает количество объектов."""
-        return len(self.data)
