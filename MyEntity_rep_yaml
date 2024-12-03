@@ -1,74 +1,68 @@
 import yaml
-import os
 
-class MyEntity_rep_yaml:
-    """
-    Класс для работы с коллекцией объектов (например, студентов), поддерживающий 
-    операции чтения/записи в YAML-файл и различные функции управления.
-    """
-    def __init__(self, filepath: str):
-        self.filepath = filepath
-        self.data = self._load_from_file()
 
-    # a. Чтение всех значений из файла
-    def _load_from_file(self):
-        if os.path.exists(self.filepath):
-            with open(self.filepath, 'r', encoding='utf-8') as file:
-                return yaml.safe_load(file) or []
-        return []
+class MyEntityRepYaml:
+    """Класс для работы с данными в формате YAML."""
+    
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+        self.data = self._load_data()
 
-    # b. Запись всех значений в файл
-    def _save_to_file(self):
-        with open(self.filepath, 'w', encoding='utf-8') as file:
-            yaml.dump(self.data, file, allow_unicode=True, default_flow_style=False)
-
-    # c. Получить объект по ID
-    def get_by_id(self, entity_id: int):
-        for entity in self.data:
-            if entity['student_id'] == entity_id:
-                return entity
-        return None
-
-    # d. Получить список k по счету n объектов класса short
-    def get_k_n_short_list(self, k: int, n: int):
-        start_index = (n - 1) * k
-        end_index = start_index + k
-        student_list = self.data[start_index:end_index]
-        return [StudentBrief.from_json(yaml.dump(student)).brief_info() for student in student_list]
-
-    # e. Сортировать элементы по выбранному полю (по умолчанию по фамилии)
-    def sort_by_field(self, field: str = 'last_name'):
+    def _load_data(self):
+        """Приватный метод для загрузки данных из YAML файла."""
         try:
-            self.data.sort(key=lambda x: x[field].lower())
-            self._save_to_file()
-        except KeyError:
-            raise ValueError(f"Поле '{field}' не найдено в данных.")
+            with open(self.file_path, 'r', encoding='utf-8') as file:
+                return yaml.safe_load(file) or []
+        except FileNotFoundError:
+            return []
+        except yaml.YAMLError as e:
+            raise ValueError(f"Ошибка чтения YAML файла: {e}")
 
-    # f. Добавить объект в список (при добавлении сформировать новый ID)
-    def add_entity(self, student: Student):
-        new_id = max([s['student_id'] for s in self.data], default=0) + 1
-        student.student_id = new_id
-        self.data.append(student.__dict__)
-        self._save_to_file()
+    def _save_data(self):
+        """Приватный метод для сохранения данных в YAML файл."""
+        with open(self.file_path, 'w', encoding='utf-8') as file:
+            yaml.safe_dump(self.data, file, allow_unicode=True)
 
-    # g. Заменить элемент списка по ID
-    def replace_entity(self, student_id: int, new_student: Student):
-        for i, entity in enumerate(self.data):
-            if entity['student_id'] == student_id:
-                new_student.student_id = student_id
-                self.data[i] = new_student.__dict__
-                self._save_to_file()
+    def get_all(self):
+        """Чтение всех значений из файла."""
+        return self.data
+
+    def get_by_id(self, entity_id: int):
+        """Получить объект по ID."""
+        return next((item for item in self.data if item.get('id') == entity_id), None)
+
+    def add_entity(self, entity: dict):
+        """Добавить объект в список, с автоматическим созданием нового ID."""
+        max_id = max((item['id'] for item in self.data), default=0)
+        entity['id'] = max_id + 1
+        self.data.append(entity)
+        self._save_data()
+
+    def delete_by_id(self, entity_id: int):
+        """Удалить объект из списка по ID."""
+        self.data = [item for item in self.data if item.get('id') != entity_id]
+        self._save_data()
+
+    def replace_by_id(self, entity_id: int, new_entity: dict):
+        """Заменить объект в списке по ID."""
+        for i, item in enumerate(self.data):
+            if item.get('id') == entity_id:
+                self.data[i] = {**new_entity, 'id': entity_id}
+                self._save_data()
                 return
-        raise ValueError(f"Студент с ID {student_id} не найден.")
+        raise ValueError(f"Объект с ID {entity_id} не найден.")
 
-    # h. Удалить элемент списка по ID
-    def delete_entity(self, student_id: int):
-        initial_count = len(self.data)
-        self.data = [entity for entity in self.data if entity['student_id'] != student_id]
-        if len(self.data) == initial_count:
-            raise ValueError(f"Студент с ID {student_id} не найден.")
-        self._save_to_file()
+    def get_k_n_short_list(self, k: int, n: int):
+        """Получить список k по счету n объектов."""
+        start = (n - 1) * k
+        end = start + k
+        return self.data[start:end]
 
-    # i. Получить количество элементов
+    def sort_by_field(self, field: str):
+        """Сортировать элементы по выбранному полю."""
+        self.data.sort(key=lambda x: x.get(field, ''))
+        self._save_data()
+
     def get_count(self):
+        """Получить количество элементов."""
         return len(self.data)
