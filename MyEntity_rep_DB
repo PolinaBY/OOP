@@ -1,74 +1,53 @@
-import mysql.connector
-
-
 class MyEntityRepDB:
-    """Класс для работы с базой данных MySQL."""
-
-    def __init__(self, host: str, user: str, password: str, database: str, table_name: str):
-        self.connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
-        )
-        self.cursor = self.connection.cursor(dictionary=True)
-        self.table_name = table_name
-
-    def get_by_id(self, entity_id: int) -> dict:
+    """Класс для работы с базой данных и манипуляций с объектами."""
+    
+    def __init__(self):
+        self.db_connection = DBConnection()
+        self.connection = self.db_connection.get_connection()
+    
+    def get_by_id(self, entity_id: int):
         """Получить объект по ID."""
-        query = f"SELECT * FROM {self.table_name} WHERE id = %s"
-        self.cursor.execute(query, (entity_id,))
-        result = self.cursor.fetchone()
-        if not result:
-            raise ValueError(f"Объект с ID {entity_id} не найден.")
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM students WHERE student_id = ?", (entity_id,))
+        result = cursor.fetchone()
+        cursor.close()
         return result
-
-    def get_k_n_short_list(self, k: int, n: int) -> list:
-        """Получить k по счету n объектов."""
-        offset = (k - 1) * n
-        query = f"SELECT * FROM {self.table_name} LIMIT %s OFFSET %s"
-        self.cursor.execute(query, (n, offset))
-        return self.cursor.fetchall()
-
+    
+    def get_k_n_short_list(self, k: int, n: int):
+        """Получить список k по счету n объектов класса short."""
+        cursor = self.connection.cursor()
+        cursor.execute(f"SELECT * FROM students LIMIT {n} OFFSET {k}")
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+    
     def add_entity(self, entity: dict):
-        """Добавить объект в список (сформировать новый ID)."""
-        # Извлекаем все ключи и значения из переданного словаря
-        columns = ", ".join(entity.keys())
-        placeholders = ", ".join(["%s"] * len(entity))
-        values = tuple(entity.values())
-
-        query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
-        self.cursor.execute(query, values)
+        """Добавить объект в базу данных (сгенерировать новый ID)."""
+        cursor = self.connection.cursor()
+        cursor.execute("INSERT INTO students (first_name, last_name, patronymic, phone) VALUES (?, ?, ?, ?)",
+                       (entity['first_name'], entity['last_name'], entity['patronymic'], entity['phone']))
         self.connection.commit()
-
+        cursor.close()
+    
     def replace_by_id(self, entity_id: int, new_entity: dict):
-        """Заменить объект по ID."""
-        # Формируем части запроса для обновления данных
-        set_clause = ", ".join([f"{key} = %s" for key in new_entity.keys()])
-        values = tuple(new_entity.values()) + (entity_id,)
-
-        query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = %s"
-        self.cursor.execute(query, values)
-        if self.cursor.rowcount == 0:
-            raise ValueError(f"Объект с ID {entity_id} не найден.")
+        """Заменить элемент списка по ID."""
+        cursor = self.connection.cursor()
+        cursor.execute("UPDATE students SET first_name = ?, last_name = ?, patronymic = ?, phone = ? WHERE student_id = ?",
+                       (new_entity['first_name'], new_entity['last_name'], new_entity['patronymic'], new_entity['phone'], entity_id))
         self.connection.commit()
-
+        cursor.close()
+    
     def delete_by_id(self, entity_id: int):
-        """Удалить объект по ID."""
-        query = f"DELETE FROM {self.table_name} WHERE id = %s"
-        self.cursor.execute(query, (entity_id,))
-        if self.cursor.rowcount == 0:
-            raise ValueError(f"Объект с ID {entity_id} не найден.")
+        """Удалить элемент списка по ID."""
+        cursor = self.connection.cursor()
+        cursor.execute("DELETE FROM students WHERE student_id = ?", (entity_id,))
         self.connection.commit()
-
-    def get_count(self) -> int:
-        """Получить количество элементов."""
-        query = f"SELECT COUNT(*) AS count FROM {self.table_name}"
-        self.cursor.execute(query)
-        result = self.cursor.fetchone()
-        return result['count'] if result else 0
-
-    def close_connection(self):
-        """Закрыть соединение с базой данных."""
-        self.cursor.close()
-        self.connection.close()
+        cursor.close()
+    
+    def get_count(self):
+        """Получить количество элементов в базе данных."""
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM students")
+        count = cursor.fetchone()[0]
+        cursor.close()
+        return count
