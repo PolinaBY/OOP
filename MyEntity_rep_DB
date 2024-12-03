@@ -1,123 +1,74 @@
 import mysql.connector
-from abc import ABC, abstractmethod
 
-# Базовый интерфейс для всех репозиториев
-class EntityRepository(ABC):
-    @abstractmethod
-    def get_by_id(self, entity_id):
-        pass
 
-    @abstractmethod
-    def get_all(self):
-        pass
+class MyEntityRepDB:
+    """Класс для работы с базой данных MySQL."""
 
-    @abstractmethod
-    def add(self, entity_data):
-        pass
+    def __init__(self, host: str, user: str, password: str, database: str, table_name: str):
+        self.connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+        self.cursor = self.connection.cursor(dictionary=True)
+        self.table_name = table_name
 
-    @abstractmethod
-    def update(self, entity_id, updated_data):
-        pass
-
-    @abstractmethod
-    def delete(self, entity_id):
-        pass
-
-class MyEntityAdapter(EntityRepository):
-    def __init__(self, adapted_class):
-        self.adapted = adapted_class
-
-    def get_by_id(self, entity_id):
-        """Адаптирует метод get_by_id."""
-        return self.adapted.get_by_id(entity_id)
-
-    def get_all(self):
-        """Адаптирует метод get_k_n_short_list для получения всех объектов."""
-        return self.adapted.get_k_n_short_list(k=1, n=self.adapted.get_count())
-
-    def add(self, entity_data):
-        """Адаптирует метод add_entity."""
-        return self.adapted.add_entity(entity_data)
-
-    def update(self, entity_id, updated_data):
-        """Адаптирует метод update_by_id."""
-        return self.adapted.update_by_id(entity_id, updated_data)
-
-    def delete(self, entity_id):
-        """Адаптирует метод delete_by_id."""
-        return self.adapted.delete_by_id(entity_id)
-
-class MyEntity_rep_DB:
-    def __init__(self, db_connection: DatabaseConnection):
-        self.db = db_connection
-
-    def get_by_id(self, entity_id):
+    def get_by_id(self, entity_id: int) -> dict:
         """Получить объект по ID."""
-        query = "SELECT * FROM my_entity WHERE id = %s"
-        result = self.db.execute_query(query, (entity_id,)).fetchone()
+        query = f"SELECT * FROM {self.table_name} WHERE id = %s"
+        self.cursor.execute(query, (entity_id,))
+        result = self.cursor.fetchone()
+        if not result:
+            raise ValueError(f"Объект с ID {entity_id} не найден.")
         return result
 
-    def get_k_n_short_list(self, k, n):
-        """Получить k по счету n объектов (например, вторые 20)."""
+    def get_k_n_short_list(self, k: int, n: int) -> list:
+        """Получить k по счету n объектов."""
         offset = (k - 1) * n
-        query = "SELECT * FROM my_entity ORDER BY id LIMIT %s OFFSET %s"
-        result = self.db.execute_query(query, (n, offset)).fetchall()
-        return result
+        query = f"SELECT * FROM {self.table_name} LIMIT %s OFFSET %s"
+        self.cursor.execute(query, (n, offset))
+        return self.cursor.fetchall()
 
-    def add_entity(self, entity_data):
-        """Добавить объект в список и сформировать новый ID."""
-        columns = ", ".join(entity_data.keys())
-        placeholders = ", ".join(["%s"] * len(entity_data))
-        query = f"INSERT INTO my_entity ({columns}) VALUES ({placeholders})"
-        self.db.execute_query(query, tuple(entity_data.values()))
-        self.db.commit()
-        return self.db.cursor.lastrowid
+    def add_entity(self, entity: dict):
+        """Добавить объект в список (сформировать новый ID)."""
+        # Извлекаем все ключи и значения из переданного словаря
+        columns = ", ".join(entity.keys())
+        placeholders = ", ".join(["%s"] * len(entity))
+        values = tuple(entity.values())
 
-    def update_by_id(self, entity_id, updated_data):
-        """Заменить элемент списка по ID."""
-        set_clause = ", ".join([f"{key} = %s" for key in updated_data.keys()])
-        query = f"UPDATE my_entity SET {set_clause} WHERE id = %s"
-        self.db.execute_query(query, tuple(updated_data.values()) + (entity_id,))
-        self.db.commit()
-        return self.db.cursor.rowcount
+        query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})"
+        self.cursor.execute(query, values)
+        self.connection.commit()
 
-    def delete_by_id(self, entity_id):
-        """Удалить элемент списка по ID."""
-        query = "DELETE FROM my_entity WHERE id = %s"
-        self.db.execute_query(query, (entity_id,))
-        self.db.commit()
-        return self.db.cursor.rowcount
+    def replace_by_id(self, entity_id: int, new_entity: dict):
+        """Заменить объект по ID."""
+        # Формируем части запроса для обновления данных
+        set_clause = ", ".join([f"{key} = %s" for key in new_entity.keys()])
+        values = tuple(new_entity.values()) + (entity_id,)
 
-    def get_count(self):
+        query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = %s"
+        self.cursor.execute(query, values)
+        if self.cursor.rowcount == 0:
+            raise ValueError(f"Объект с ID {entity_id} не найден.")
+        self.connection.commit()
+
+    def delete_by_id(self, entity_id: int):
+        """Удалить объект по ID."""
+        query = f"DELETE FROM {self.table_name} WHERE id = %s"
+        self.cursor.execute(query, (entity_id,))
+        if self.cursor.rowcount == 0:
+            raise ValueError(f"Объект с ID {entity_id} не найден.")
+        self.connection.commit()
+
+    def get_count(self) -> int:
         """Получить количество элементов."""
-        query = "SELECT COUNT(*) as count FROM my_entity"
-        result = self.db.execute_query(query).fetchone()
-        return result["count"]
+        query = f"SELECT COUNT(*) AS count FROM {self.table_name}"
+        self.cursor.execute(query)
+        result = self.cursor.fetchone()
+        return result['count'] if result else 0
 
-    def close(self):
+    def close_connection(self):
         """Закрыть соединение с базой данных."""
-        self.db.close()
-
-if __name__ == "__main__":
-    # Инициализация соединения с БД
-    db_connection = DatabaseConnection(
-        host="localhost",
-        user="your_username",
-        password="your_password",
-        database="your_database"
-    )
-
-    # Инициализация адаптируемого класса
-    my_entity_repo = MyEntity_rep_DB(db_connection)
-
-    # Оборачивание адаптером
-    adapted_repo = MyEntityAdapter(my_entity_repo)
-
-    # Использование адаптированного класса
-    print(adapted_repo.get_by_id(1))  # Получить объект по ID
-    print(adapted_repo.get_all())     # Получить все объекты
-    new_id = adapted_repo.add({"name": "Test Entity", "value": 42})
-    print(f"Добавлен объект с ID: {new_id}")
-    adapted_repo.update(new_id, {"name": "Updated Test Entity", "value": 99})
-    adapted_repo.delete(new_id)
-
+        self.cursor.close()
+        self.connection.close()
