@@ -1,0 +1,30 @@
+class MyEntityRepDBAdapter:
+    """Адаптер для работы с базой данных, совместимый с интерфейсом других репозиториев."""
+    
+    def __init__(self, db_rep):
+        """Принимает объект класса MyEntityRepDB."""
+        self.db_rep = db_rep
+
+    def get_by_id(self, entity_id: int):
+        """Получить объект по ID (делегируем работу базе данных)."""
+        return self.db_rep.get_by_id(entity_id)
+    
+    def get_k_n_short_list(self, k: int, n: int):
+        """Получить список k по счету n объектов класса short (делегируем работу базе данных)."""
+        return self.db_rep.get_k_n_short_list(k, n)
+    
+    def add_entity(self, entity: dict):
+        """Добавить объект в базу данных (делегируем работу базе данных)."""
+        self.db_rep.add_entity(entity)
+    
+    def replace_by_id(self, entity_id: int, new_entity: dict):
+        """Заменить элемент списка по ID (делегируем работу базе данных)."""
+        self.db_rep.replace_by_id(entity_id, new_entity)
+    
+    def delete_by_id(self, entity_id: int):
+        """Удалить элемент списка по ID (делегируем работу базе данных)."""
+        self.db_rep.delete_by_id(entity_id)
+    
+    def get_count(self):
+        """Получить количество элементов в базе данных (делегируем работу базе данных)."""
+        return self.db_rep.get_count()
