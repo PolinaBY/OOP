@@ -6,20 +6,18 @@ import yaml
 class MyEntityRepBase(ABC):
     """Базовый класс для репозиториев с общей логикой работы с данными."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, strategy: StorageStrategy):
         self.file_path = file_path
-        self.data = []
-        self.load_data()
+        self.strategy = strategy
+        self.data = self.strategy.load(self.file_path)
 
-    @abstractmethod
     def load_data(self):
         """Загрузка данных из файла."""
-        pass
+        self.data = self.strategy.load(self.file_path)
 
-    @abstractmethod
     def save_data(self):
         """Сохранение данных в файл."""
-        pass
+        self.strategy.save(self.file_path, self.data)
 
     def get_all(self) -> list:
         """Получить все объекты."""
