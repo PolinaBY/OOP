@@ -1,16 +1,15 @@
-import sqlite3
+import psycopg2
 
 class DBConnection:
     """Класс для работы с базой данных (Одиночка)."""
     
     _instance = None
-    _connection = None
     
-    def __new__(cls):
+    def __new__(cls, connection_string: str):
         """Гарантирует, что будет создан только один экземпляр соединения с базой данных."""
         if cls._instance is None:
             cls._instance = super(DBConnection, cls).__new__(cls)
-            cls._connection = sqlite3.connect("students.db")  # Или другое имя файла БД
+            cls._instance._connection = psycopg2.connect(connection_string)
         return cls._instance
     
     def get_connection(self):
@@ -21,4 +20,4 @@ class DBConnection:
         """Закрывает соединение с БД."""
         if self._connection:
             self._connection.close()
-            self._connection = None
+            DBConnection._instance = None
