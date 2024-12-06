@@ -1,20 +1,19 @@
 class MyEntityRepDB:
     """Класс для работы с базой данных и манипуляций с объектами."""
     
-    def __init__(self):
-        self.db_connection = DBConnection()
-        self.connection = self.db_connection.get_connection()
+    def __init__(self, connection_string: str):
+        self.db_connection = DBConnection(connection_string)
     
     def get_by_id(self, entity_id: int):
         """Получить объект по ID."""
-        cursor = self.connection.cursor()
-        cursor.execute("SELECT * FROM students WHERE student_id = ?", (entity_id,))
-        result = cursor.fetchone()
-        cursor.close()
-        return result
+        conn = self.db_connection.get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM students WHERE id = %s", (entity_id,))
+            return cursor.fetchone()
+
     
     def get_k_n_short_list(self, k: int, n: int):
-        """Получить список k по счету n объектов класса short."""
+        """Получить список k по счету n объектов """
         cursor = self.connection.cursor()
         cursor.execute(f"SELECT * FROM students LIMIT {n} OFFSET {k}")
         result = cursor.fetchall()
