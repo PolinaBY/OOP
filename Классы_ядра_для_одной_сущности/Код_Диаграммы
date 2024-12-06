@@ -1,0 +1,98 @@
+
+classDiagram
+    class StudentBase {
+        <<abstract>>
+        - student_id: int
+        - first_name: str
+        - last_name: str
+        - patronymic: str
+        - phone: str
+        + __init__(student_id: int, first_name: str, last_name: str, patronymic: str, phone: str)
+        + from_string(student_str: str): StudentBase
+        + from_json(json_str: str): StudentBase
+        + __str__(): str
+        + __eq__(other): bool
+    }
+    
+    class Student {
+        - address: str
+        + __init__(student_id: int, first_name: str, last_name: str, patronymic: str, address: str, phone: str)
+        + __str__(): str
+    }
+    
+    class StudentBrief {
+        + __init__(student_id: int, first_name: str, last_name: str, patronymic: str, phone: str)
+        + from_student(student: Student): StudentBrief
+        + get_brief_name(): str
+        + __str__(): str
+    }
+
+    class MyEntityRepBase {
+        - file_path: str
+        - strategy: StorageStrategy
+        - data: List~dict~
+        + load_data()
+        + save_data()
+        + get_all() List~dict~
+        + get_by_id(entity_id: int) dict
+        + add_entity(entity: dict)
+        + delete_by_id(entity_id: int)
+        + replace_by_id(entity_id: int, new_entity: dict)
+        + get_k_n_short_list(k: int, n: int) List~dict~
+        + sort_by_field(field: str)
+        + get_count() int
+    }
+
+    class StudentStrategy {
+        <<interface>>
+        + load(file_path: str) List~dict~
+        + save(file_path: str, data: List~dict~)
+    }
+
+    class MyEntityRepJson {
+        + load(file_path: str) List~dict~
+        + save(file_path: str, data: List~dict~)
+    }
+    
+    class MyEntityRepYaml {
+        + load(file_path: str) List~dict~
+        + save(file_path: str, data: List~dict~)
+    }
+   
+   class DBConnection {
+        <<singleton>>
+        - _instance: DBConnection
+        - _connection: psycopg2.Connection
+        + __new__(connection_string: str)
+        + get_connection(): psycopg2.Connection
+        + close_connection()
+    }
+
+    class MyEntityRepDB {
+        + get_by_id(entity_id: int)
+        + get_k_n_short_list(k: int, n: int)
+        + add_entity(entity: dict)
+        + replace_by_id(entity_id: int, new_entity: dict)
+        + delete_by_id(entity_id: int)
+        + get_count()
+    }
+
+    class MyEntityRepDBAdapter {
+        + get_by_id(entity_id: int)
+        + get_k_n_short_list(k: int, n: int)
+        + add_entity(entity: dict)
+        + replace_by_id(entity_id: int, new_entity: dict)
+        + delete_by_id(entity_id: int)
+        + get_count()
+    }
+    StudentBase <|-- Student
+    StudentBase <|-- StudentBrief
+    MyEntityRepDB <--> MyEntityRepDBAdapter: композирует
+    StudentStrategy <..|> MyEntityRepBase : агригирует
+    MyEntityRepJson --> StudentStrategy 
+    MyEntityRepYaml --> StudentStrategy 
+    MyEntityRepDB <|--> DBConnection : агригирует
+    
+    
+    
+
