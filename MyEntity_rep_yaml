@@ -2,17 +2,15 @@ import yaml
 
 
 class MyEntityRepYaml(MyEntityRepBase):
-    """Репозиторий для работы с YAML."""
+    """Стратегия для работы с YAML."""
 
-    def load_data(self):
-        """Загрузка данных из YAML файла."""
+    def load(self, file_path: str) -> List[dict]:
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as file:
-                self.data = yaml.safe_load(file) or []
+            with open(file_path, 'r') as file:
+                return yaml.safe_load(file) or []
         except FileNotFoundError:
-            self.data = []
+            return []
 
-    def save_data(self):
-        """Сохранение данных в YAML файл."""
-        with open(self.file_path, 'w', encoding='utf-8') as file:
-            yaml.safe_dump(self.data, file, allow_unicode=True, sort_keys=False, default_flow_style=False)
+    def save(self, file_path: str, data: List[dict]):
+        with open(file_path, 'w') as file:
+            yaml.safe_dump(data, file, default_flow_style=False)
