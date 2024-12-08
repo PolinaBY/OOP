@@ -15,12 +15,7 @@ class StudentRepYaml(StudentStrategy):
         with open(file_path, 'w') as file:
             yaml.safe_dump(data, file, default_flow_style=False)
 
-    def add(self, student):
-        data = self.load()
-        data.append(student.to_dict())
-        self.save(data)
-
-    def display(self):
+    def display(self, file_path: str):
         data = self.load(file_path)
         for item in data:
             print(item)
