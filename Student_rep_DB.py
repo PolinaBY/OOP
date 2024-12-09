@@ -26,14 +26,21 @@ class StudentRepDB:
     def add_student(self, student: Student):
         """Добавить объект в базу данных (сгенерировать новый ID)."""
         conn = self.db_connection.get_connection()
+        unique_fields = ("phone")
         with conn.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO students (first_name, last_name, patronymic, phone) VALUES (%s, %s, %s, %s) RETURNING id",
-                (student['first_name'], student['last_name'], student['patronymic'], student['phone'])
+                "SELECT COUNT(*) FROM students WHERE phone = %s",
+                (student['phone'])
             )
-            student_id = cursor.fetchone()[0]
-            conn.commit()
-            return student_id
+        if cursor.fetchone()[0] > 0:
+            raise ValueError("Студент с такими данными уже существует.")
+        cursor.execute(
+            "INSERT INTO students (first_name, last_name, patronymic, phone) VALUES (%s, %s, %s, %s) RETURNING id",
+            (student['first_name'], student['last_name'], student['patronymic'], student['phone'])
+        )
+        student_id = cursor.fetchone()[0]
+        conn.commit()
+        return student_id
     
     def replace_by_id(self, student_id: int, new_student: dict):
         """Заменить элемент списка по ID."""
