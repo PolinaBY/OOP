@@ -19,3 +19,6 @@ class StudentRepJson(StudentStrategy):
        data = self.load(file_path)
         for item in data:
             print(item)
+
+strategy=StudentRepJson('student.json')
+json_repository=StudentRepBase(strategy)
