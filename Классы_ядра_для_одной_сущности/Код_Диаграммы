@@ -1,98 +1,103 @@
-
 classDiagram
     class StudentBase {
-        <<abstract>>
-        - student_id: int
-        - first_name: str
-        - last_name: str
-        - patronymic: str
-        - phone: str
-        + __init__(student_id: int, first_name: str, last_name: str, patronymic: str, phone: str)
-        + from_string(student_str: str): StudentBase
-        + from_json(json_str: str): StudentBase
-        + __str__(): str
-        + __eq__(other): bool
-    }
-    
-    class Student {
-        - address: str
-        + __init__(student_id: int, first_name: str, last_name: str, patronymic: str, address: str, phone: str)
-        + __str__(): str
-    }
-    
-    class StudentBrief {
-        + __init__(student_id: int, first_name: str, last_name: str, patronymic: str, phone: str)
-        + from_student(student: Student): StudentBrief
-        + get_brief_name(): str
-        + __str__(): str
+        - int student_id
+        - str first_name
+        - str last_name
+        - str patronymic
+        - str phone
+        + validate_student_id(int student_id) bool
+        + validate_first_name(str first_name) bool
+        + validate_last_name(str last_name) bool
+        + validate_patronymic(str patronymic) bool
+        + validate_phone(str phone) bool
+        + from_string(str student_str) StudentBase
+        + from_json(str json_str) StudentBase
+        + __str__() str
+        + __eq__(StudentBase other) bool
     }
 
-    class MyEntityRepBase {
-        - file_path: str
-        - strategy: StorageStrategy
-        - data: List~dict~
+    class Student {
+        - str address
+        + validate_address(str address) bool
+        + __str__() str
+    }
+    
+
+    class StudentBrief {
+        + from_student(Student student) StudentBrief
+        + get_brief_name() str
+        + __str__() str
+    }
+    
+
+    class StudentStrategy {
+        <<abstract>>
+        + load(str file_path) List~dict~
+        + save(str file_path, List~dict~ data)
+        + display()
+    }
+
+    class StudentRepJson {
+        + load(str file_path) List~dict~
+        + save(str file_path, List~dict~ data)
+        + display()
+    }
+    
+
+    class StudentRepYaml {
+        + load(str file_path) List~dict~
+        + save(str file_path, List~dict~ data)
+        + display()
+    }
+    
+
+    class StudentRepBase {
+        - str file_path
+        - StudentStrategy strategy
+        - List~dict~ data
         + load_data()
         + save_data()
-        + get_all() List~dict~
-        + get_by_id(entity_id: int) dict
-        + add_entity(entity: dict)
-        + delete_by_id(entity_id: int)
-        + replace_by_id(entity_id: int, new_entity: dict)
-        + get_k_n_short_list(k: int, n: int) List~dict~
-        + sort_by_field(field: str)
+        + get_all() list
+        + get_by_id(int student_id) dict
+        + add_student(dict student)
+        + delete_by_id(int student_id)
+        + replace_by_id(int student_id, dict updates)
+        + get_k_n_short_list(int k, int n) list~StudentBrief~
+        + sort_by_field(str field, bool reverse) List~Product~
         + get_count() int
     }
 
-    class StudentStrategy {
-        <<interface>>
-        + load(file_path: str) List~dict~
-        + save(file_path: str, data: List~dict~)
+    class StudentAdapter {
+        - StudentRepBase student_rep_base
+        + get_k_n_short_list(int k, int n)
+        + get_by_id(int student_id)
+        + delete_by_id(int student_id)
+        + update_by_id(int student_id, dict updates)
+        + add(dict student)
+        + get_count() int
     }
 
-    class MyEntityRepJson {
-        + load(file_path: str) List~dict~
-        + save(file_path: str, data: List~dict~)
-    }
-    
-    class MyEntityRepYaml {
-        + load(file_path: str) List~dict~
-        + save(file_path: str, data: List~dict~)
-    }
-   
-   class DBConnection {
-        <<singleton>>
-        - _instance: DBConnection
-        - _connection: psycopg2.Connection
-        + __new__(connection_string: str)
-        + get_connection(): psycopg2.Connection
+    class DBConnection {
+        - instance : DBConnection
+        - connection
+        + get_connection()
         + close_connection()
     }
 
-    class MyEntityRepDB {
-        + get_by_id(entity_id: int)
-        + get_k_n_short_list(k: int, n: int)
-        + add_entity(entity: dict)
-        + replace_by_id(entity_id: int, new_entity: dict)
-        + delete_by_id(entity_id: int)
-        + get_count()
+    class StudentRepDB {
+        - DBConnection db_connection
+        + get_by_id(int student_id) dict
+        + get_k_n_short_list(int k, int n) list
+        + add_student(Student student) int
+        + replace_by_id(int student_id, dict updates)
+        + delete_by_id(int student_id)
+        + get_count() int
     }
 
-    class MyEntityRepDBAdapter {
-        + get_by_id(entity_id: int)
-        + get_k_n_short_list(k: int, n: int)
-        + add_entity(entity: dict)
-        + replace_by_id(entity_id: int, new_entity: dict)
-        + delete_by_id(entity_id: int)
-        + get_count()
-    }
-    StudentBase <|-- Student
-    StudentBase <|-- StudentBrief
-    MyEntityRepDB <--> MyEntityRepDBAdapter: композирует
-    StudentStrategy <..|> MyEntityRepBase : агригирует
-    MyEntityRepJson --> StudentStrategy 
-    MyEntityRepYaml --> StudentStrategy 
-    MyEntityRepDB <|--> DBConnection : агригирует
-    
-    
-    
-
+    Student --|> StudentBase
+    StudentBrief --|> StudentBase
+    StudentRepJson --> StudentStrategy
+    StudentRepYaml --> StudentStrategy
+    StudentRepBase o-- StudentStrategy 
+    StudentAdapter o-- StudentRepBase
+    StudentRepDB *-- DBConnection
