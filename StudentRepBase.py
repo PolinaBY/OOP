@@ -32,6 +32,10 @@ class StudentRepBase(ABC):
 
     def add_student(self, student: dict):
         """Добавить объект в репозиторий."""
+        unique_fields = ("phone")
+        for existing_student in self.data:
+            if all(existing_student.get(field) == student.get(field) for field in unique_fields):
+                raise ValueError(f"Студент с такими данными уже существует: {student}")
         new_id = max((item.get("id", 0) for item in self.data), default=0) + 1
         student["id"] = new_id
         self.data.append(student)
