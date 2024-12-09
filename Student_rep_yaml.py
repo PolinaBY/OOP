@@ -19,3 +19,6 @@ class StudentRepYaml(StudentStrategy):
         data = self.load(file_path)
         for item in data:
             print(item)
+
+strategy=StudentRepYaml('student.yaml')
+strategy.display()
