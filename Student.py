@@ -86,6 +86,11 @@ class StudentBase:
         self.__phone = value
 
     # Методы создания объекта
+    @classmethod
+    def create_new_student(cls, student_id: Optional[int], first_name: str, last_name: str, patronymic: str, phone: str):
+        new_student = cls(student_id=student_id, first_name=first_name, last_name=last_name, patronymic=patronymic, phone=phone)
+        return new_student
+
     @staticmethod
     def from_string(student_str: str):
         parts = student_str.split(',')
@@ -106,15 +111,61 @@ class StudentBase:
             phone=data['phone']
         )
 
+     @classmethod
+    def create_from_dict(cls, data: dict):
+        return cls(
+            student_id=data.get('student_id'),
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            patronymic=data.get('patronymic', ''),
+            phone=data['phone']
+        )
+
+    def to_json(self) -> str:
+        return json.dumps({
+            'student_id': self.student_id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'patronymic': self.patronymic,  
+            'phone': self.phone
+        }, ensure_ascii=False, indent=4)
+
+    @classmethod
+    def create_from_yaml(cls, yaml_string: str):
+        data = yaml.safe_load(yaml_string)
+        return cls(
+            student_id=data.get('student_id'),
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            patronymic=data.get('patronymic', ''),
+            phone=data['phone']
+        )
+
+    def to_yaml(self) -> str:
+        return yaml.dump({
+            'student_id': self.student_id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'patronymic': self.patronymic,  
+            'phone': self.phone
+        }, allow_unicode=True)
+
+    def to_dict(self) -> dict:
+        return {
+            'student_id': self.student_id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'patronymic': self.patronymic,  
+            'phone': self.phone
+        }
+
     def __str__(self):
         return (f"Студент {self.last_name} {self.first_name} {self.patronymic}, "
                 f"ID: {self.student_id}, Телефон: {self.phone}")
 
     def __eq__(self, other):
         if not isinstance(other, StudentBase):
-            return NotImplemented
-        return (self.student_id == other.student_id and
-                self.phone == other.phone)
+            return False
         return (self.phone == other.phone)
 
 
@@ -177,6 +228,11 @@ class StudentBrief(StudentBase):
 
     def __str__(self):
         return f"Студент: {self.get_brief_name()}, ID: {self.student_id}, Телефон: {self.phone}"
+
+    def __eq__(self, other):
+        if not isinstance(other, StudentBrief):
+            return False
+        return (self.phone == other.phone)
 
 
 # Пример использования классов
