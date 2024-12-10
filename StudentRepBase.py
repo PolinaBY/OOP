@@ -6,18 +6,18 @@ import yaml
 class StudentRepBase(ABC):
     """Базовый класс для репозиториев с общей логикой работы с данными."""
 
-    def __init__(self, file_path: str, strategy: StudentStrategy):
-        self.file_path = file_path
+    def __init__(self, strategy: StudentStrategy):
+        self._data = []
         self.strategy = strategy
-        self.data = self.strategy.load(self.file_path)
+        self.load_data()
 
     def load_data(self):
         """Загрузка данных из файла."""
-        self.data = self.strategy.load(self.file_path)
+        self.strategy.load(self.data)
 
     def save_data(self):
         """Сохранение данных в файл."""
-        self.strategy.save(self.file_path, self.data)
+        self.data = self.strategy.save()
 
     def get_all(self) -> list:
         """Получить все объекты."""
@@ -30,39 +30,71 @@ class StudentRepBase(ABC):
                 return student
         raise ValueError(f"Объект с ID {student_id} не найден.")
 
-    def add_student(self, student: dict):
+    def add_student(self, student: Student):
         """Добавить объект в репозиторий."""
-        unique_fields = ("phone")
-        for existing_student in self.data:
-            if all(existing_student.get(field) == student.get(field) for field in unique_fields):
-                raise ValueError(f"Студент с такими данными уже существует: {student}")
-        new_id = max((item.get("id", 0) for item in self.data), default=0) + 1
-        student["id"] = new_id
-        self.data.append(student)
-        self.save_data()
+        student_dict = student.to_dict()
+        students = [Student.create_from_dict(student) for student in self.data]
+        if not self.check_unique_code(student, students):
+            raise ValueError(f"Студент уже существует.")
+        self.data.append(student_dict)
+
+    def check_unique_code(self, student, students):
+        for student_data in students:
+            if student_data == student:
+                 raise ValueError(f"Студент уже существует.")
+        return True
 
     def delete_by_id(self, student_id: int):
         """Удалить объект по ID."""
-        self.data = [student for student in self.data if student.get("id") != student_id]
-        self.save_data()
+        student = self.get_by_id(student_id)
+        if not student:
+            raise ValueError(f"Студент с ID {student_id} не найден.")
+        self.data = [p for p in self.data if p['student_id'] != student_id]
 
-    def replace_by_id(self, student_id: int, updates: dict):
+    def replace_by_id(self, student_id: int, first_name=None, last_name=None, patronymic=None, phone=None, address=None):
         """Заменить объект по ID."""
         student = self.get_by_id(student_id)
-        valid_keys = {"id", "first_name", "last_name", "patronymic", "phone", "address"}
-        updates = {k: v for k, v in updates.items() if k in valid_keys}
-        student.update(updates)
-        self.save_data()
+        if not student:
+            raise ValueError(f"Студент с ID {student_id} не найден.")
+
+        students = [Student.create_from_dict(student) for student in self._data]
+        if not self.check_unique_code(student, students):
+            raise ValueError(f"Студент уже существует.")
+
+        if first_name:
+            student.first_name = first_name
+        if last_name:
+            student.last_name = last_name
+        if patronymic:
+            student.patronymic = patronymic
+        if phone:
+            student.phone = phone
+        if address:
+            student.address = address
+
+        for i, p in enumerate(self.data):
+            if p['student_id'] == student_id:
+                self.data[i] = student.to_dict()
+                break
 
     def get_k_n_short_list(self, k: int, n: int) -> list[StudentBrief]:
         """Получить k по счету n объектов."""
         start_index = (n - 1) * k
         end_index = start_index + k
-        return self.data[start_index:end_index]
+        return [
+            StudentBrief(
+                student_id=student['student_id'],
+                first_name=student['first_name'],
+                last_name=student['last_name'],
+                patronymic=student['patronymic'],
+                phone=student['phone']
+            )
+            for student in self._data[start_index:end_index]
+        ]
 
     def sort_by_field(self, field: str, reverse: bool = False) -> List[Product]:
         """Сортировать данные по указанному полю."""
-        if not self.data or field not in self.data[0]:
+        if field not in ['student_id', 'first_name', 'last_name', 'patronymic', 'phone', 'address']:
             raise ValueError(f"Invalid field '{field}' for sorting.")
         self._data.sort(key=lambda x: x.get(field), reverse=reverse)
         return [Student.create_from_dict(student) for student in self._data]
