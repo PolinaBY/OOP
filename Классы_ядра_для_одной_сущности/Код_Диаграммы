@@ -1,19 +1,22 @@
 classDiagram
     class StudentBase {
-        - int student_id
-        - str first_name
-        - str last_name
-        - str patronymic
-        - str phone
-        + validate_student_id(int student_id) bool
-        + validate_first_name(str first_name) bool
-        + validate_last_name(str last_name) bool
-        + validate_patronymic(str patronymic) bool
-        + validate_phone(str phone) bool
-        + from_string(str student_str) StudentBase
-        + from_json(str json_str) StudentBase
-        + __str__() str
-        + __eq__(StudentBase other) bool
+         -student_id: int
+        -first_name: str
+        -last_name: str
+        -patronymic: str
+        -phone: str
+        +validate_student_id(student_id: int) bool
+        +validate_first_name(first_name: str) bool
+        +validate_last_name(last_name: str) bool
+        +validate_patronymic(patronymic: str) bool
+        +validate_phone(phone: str) bool
+        +to_json() str
+        +to_yaml() str
+        +to_dict() dict
+        +create_new_student(cls, ...)
+        +from_string(student_str: str)
+        +from_json(cls, json_str: str)
+        +create_from_yaml(cls, yaml_string: str)
     }
 
     class Student {
