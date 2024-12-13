@@ -1,8 +1,18 @@
-class StudentRepDB:
+from decimal import Decimal
+from typing import List, Optional
+from Student import Student
+from Observer import Observable
+from StudentBrief import StudentBrief
+from pymysql import MySQLError
+from DBConnection import DBConnection
+
+class StudentRepDB(Observable):
     """Класс для работы с базой данных и манипуляций с объектами."""
     
     def __init__(self, host, user, password, database, port=3306):
+        super().__init__()
         self.db_connection = DBConnection(host, user, password, database, port)
+        self._valid_sort_fields = {'first_name', 'last_name', 'patronymic'}
     
     def get_by_id(self, student_id: int) -> Student:
         """Получить объект по ID."""
@@ -21,15 +31,21 @@ class StudentRepDB:
             )
 
     
-    def get_k_n_short_list(self, k: int, n: int) -> List[Student]:
+    def get_k_n_short_list(self, k: int, n: int, sort_field: Optional[str] = None, sort_order: str = "ASC") -> List[StudentBrief]:
         """Получить список k по счету n объектов """
         offset = (n - 1) * k
         conn = self.db_connection.get_connection()
+        if sort_field and sort_field not in self._valid_sort_fields:
+            raise ValueError(f"Недопустимое поле сортировки. Допустимые поля: {', '.join(self._valid_sort_fields)}")
+        if sort_order.upper() not in ("ASC", "DESC"):
+            raise ValueError("Порядок сортировки должен быть ASC или DESC.")
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM students ORDER BY id LIMIT %s OFFSET %s", (k, offset))
+            cursor.execute("SELECT * FROM students {order_clause} LIMIT %s OFFSET %s", (k, offset))
+            order_clause = f"ORDER BY {sort_field} {sort_order}" if sort_field else ""
+            sql = sql.format(order_clause=order_clause)
             student = cursor.fetchone()
             return [
-                Student(
+                StudentBrief(
                     student_id=student['student_id'],
                     first_name=student['first_name'],
                     last_name=student['last_name'],
@@ -49,6 +65,8 @@ class StudentRepDB:
             with conn.cursor() as cursor:
                 cursor.execute(query, values)
                 conn.commit()
+                student.student_id = cursor.lastrowid
+            self.notify_observers()
 
         except MySQLError as e:
             if e.args[0] == 1062:
@@ -77,6 +95,10 @@ class StudentRepDB:
         with conn.cursor() as cursor:
             cursor.execute("DELETE FROM students WHERE id = %s", (student_id,))
             conn.commit()
+            success = cursor.rowcount > 0
+            if success:
+                self.notify_observers()
+            return success
     
     def get_count(self) -> int:
         """Получить количество элементов в базе данных."""
