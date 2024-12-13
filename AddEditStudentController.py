@@ -18,25 +18,18 @@ class AddEditStudentController:
     def handle_save(self, data):
         """Обработка сохранения студента"""
         try:
-            # Создание или обновление продукта
-            if self.student:  # Редактирование
-                updated_student = Student.create_new_student(
-                    student_id=self.student.student_id,
-                    first_name=data['first_name_entry'],
-                    last_name=data['last_name_entry'],
-                    patronymic=data['patronymic_entry'],
-                    phone=data['phone_entry']
-                )
+            # Создание или обновление 
+            updated_student = Student.create_new_student(
+                student_id=self.student.student_id,
+                first_name=data['first_name_entry'],
+                last_name=data['last_name_entry'],
+                patronymic=data['patronymic_entry'],
+                phone=data['phone_entry']
+            )
+            if self.product:
                 self.repository_adapter.update_by_id(self.student.student_id, updated_student)
             else:  # Создание нового
-                new_student = Student.create_new_student(
-                    student_id=None,  # ID будет назначен при сохранении
-                    first_name=data['first_name_entry'],
-                    last_name=data['last_name_entry'],
-                    patronymic=data['patronymic_entry'],
-                    phone=data['phone_entry']
-                )
-                self.repository_adapter.add(new_student)
+                self.repository_adapter.add(updated_product)
             self.view.destroy()  # Закрываем окно после успешного сохранения
         except (ValueError, InvalidOperation) as e:
             self.view.show_error(f"Validation error: {str(e)}")
