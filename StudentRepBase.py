@@ -9,6 +9,7 @@ class StudentRepBase(ABC):
     def __init__(self, strategy: StudentStrategy):
         self._data = []
         self.strategy = strategy
+        self._valid_sort_fields = {'first_name', 'last_name', 'patronymic'}
         self.load_data()
 
     def load_data(self):
@@ -77,10 +78,21 @@ class StudentRepBase(ABC):
                 self.data[i] = student.to_dict()
                 break
 
-    def get_k_n_short_list(self, k: int, n: int) -> list[StudentBrief]:
+    def get_k_n_short_list(self, k: int, n: int, sort_field: Optional[str] = None, sort_order: str = "ASC") -> list[StudentBrief]:
         """Получить k по счету n объектов."""
+        if sort_field and sort_field not in self._valid_sort_fields:
+            raise ValueError(f"Недопустимое поле сортировки. Допустимые поля: {', '.join(self._valid_sort_fields)}")
+        if sort_order.upper() not in ("ASC", "DESC"):
+            raise ValueError("Порядок сортировки должен быть ASC или DESC.")
+
+        data = self._data.copy()
+        # Применяем сортировку, если указано поле
+        if sort_field:
+            reverse = sort_order.upper() == "DESC"
+            data.sort(key=lambda x: x[sort_field], reverse=reverse)
         start_index = (n - 1) * k
         end_index = start_index + k
+        page_data = data[start_index:end_index]
         return [
             StudentBrief(
                 student_id=student['student_id'],
@@ -89,10 +101,10 @@ class StudentRepBase(ABC):
                 patronymic=student['patronymic'],
                 phone=student['phone']
             )
-            for student in self._data[start_index:end_index]
+            for student in page_data
         ]
 
-    def sort_by_field(self, field: str, reverse: bool = False) -> List[Product]:
+    def sort_by_field(self, field: str, reverse: bool = False) -> List[Student]:
         """Сортировать данные по указанному полю."""
         if field not in ['student_id', 'first_name', 'last_name', 'patronymic', 'phone', 'address']:
             raise ValueError(f"Invalid field '{field}' for sorting.")
@@ -102,3 +114,7 @@ class StudentRepBase(ABC):
     def get_count(self) -> int:
         """Получить количество объектов."""
         return len(self.data)
+
+    def get_all_students(self) -> List[Student]:
+        """Получить все продукты"""
+        return [Student.create_from_dict(student) for student in self._data]
