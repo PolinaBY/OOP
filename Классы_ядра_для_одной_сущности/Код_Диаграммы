@@ -97,6 +97,75 @@ classDiagram
         + get_count() int
     }
 
+    %% Abstract classes
+    class Observer {
+        <<abstract>>
+        +update()*
+    }
+
+    class Observable {
+        <<abstract>>
+        -_observers: List[Observer]
+        +add_observer(observer: Observer)
+        +remove_observer(observer: Observer)
+        +notify_observers()
+    }
+
+    %% Main classes
+    class ApplicationController {
+        -repository: Adapter
+        -main_window: MainWindow
+        -_current_sort_field: str
+        -_current_sort_order: str
+        +run()
+        +update()
+        +handle_add()
+        +handle_edit()
+        +handle_delete()
+        +handle_view()
+        +handle_sort(event)
+        +handle_page_change(page_number)
+    }
+
+    class MainWindow {
+        -items_per_page: int
+        -current_page: int
+        -total_pages: int
+        +tree: Treeview
+        +student_code_to_id: dict
+        +set_add_command(command)
+        +set_edit_command(command)
+        +set_delete_command(command)
+        +set_view_command(command)
+        +update_student(student, total_items)
+    }
+
+    class AddEditStudentWindow {
+        -entries: dict
+        -_save_command: function
+        +set_save_command(command)
+        +get_student_data()
+        +set_student_data(student)
+        +show_error(message)
+    }
+
+    class AddEditStudentController {
+        -view: AddEditStudenttWindow
+        -repository_adapter: StudentAdapter
+        -student: Student
+        +handle_save(data)
+    }
+
+    class StudentDetailsWindow {
+        +display_student(student)
+    }
+
+    class StudentDetailsController {
+        -view: StudentDetailsWindow
+        -student: Student
+        +display_student()
+    }
+
     Student --|> StudentBase
     StudentBrief --|> StudentBase
     StudentRepJson --> StudentStrategy
@@ -104,3 +173,23 @@ classDiagram
     StudentRepBase o-- StudentStrategy 
     StudentAdapter o-- StudentRepBase
     StudentRepDB *-- DBConnection
+
+    Observer <|-- ApplicationController 
+    Observable <|-- StudentAdapter 
+    Observable <|-- StudentRepDB
+    ApplicationController *-- MainWindow 
+    ApplicationController --> StudentAdapter 
+    ApplicationController --> StudentRepDB
+    ApplicationController *-- AddEditStudentController
+    ApplicationController *-- StudentDetailsController
+
+    AddEditStudentController *-- AddEditStudentWindow
+    AddEditStudentController ..> StudentAdapter
+    AddEditStudentController ..> StudentRepDB
+    AddEditStudentController o-- Student
+
+    StudentDetailsController *-- StudentDetailsWindow
+    StudentDetailsController o-- Student
+ 
+    StudentRepDB o-- DBConnection
+    
