@@ -1,0 +1,120 @@
+sequenceDiagram
+    participant User
+    participant Main as Main:main()
+    participant ApplicationController as ApplicationController:controller
+    participant MainWindow as MainWindow:main_window
+    participant Repository as Repository:repository_adapter
+    participant AddEditStudentController as AddEditStudentController:controller
+    participant AddEditStudentWindow as AddEditStudentWindow:add_window/edit_window
+    participant StudentDetailsController as StudentDetailsController:controller
+    participant DetailsWindow as DetailsWindow:details_window
+    
+    %% Инициализация приложения
+    rect rgb(240, 260, 200)
+    Note over User,DetailsWindow: Инициализация приложения
+    User->>+Main: main()
+    Main->>+Repository: StudentRepBase(strategy)
+    Repository-->>-Main: return repository
+    Main->>+ApplicationController: ApplicationController(repository)
+    ApplicationController->>MainWindow: MainWindow()
+    MainWindow-->>ApplicationController: return window
+    ApplicationController->>Repository: add_observer(self)
+    ApplicationController->>Repository: get_k_n_short_list(k, n, sort_field, sort_order)
+    Repository-->>ApplicationController: return students[]
+    ApplicationController->>MainWindow: update_students(students, total_items)
+    Main->>ApplicationController: run()
+    ApplicationController->>MainWindow: mainloop()
+    MainWindow-->>User: display UI
+    end
+ 
+    %% Добавление студента
+    rect rgb(250, 250, 200)
+    Note over User,DetailsWindow: Добавление нового студента
+    User->>MainWindow: click add_button
+    MainWindow->>ApplicationController: handle_add()
+    ApplicationController->>+AddEditStudentWindow: AddEditStudentWindow(parent, is_edit=False)
+    ApplicationController->>+AddEditStudentController: AddEditStudentController(view, repository_adapter)
+    AddEditStudentWindow-->>User: display form
+    User->>AddEditStudentWindow: input data
+    User->>AddEditStudentWindow: click save_button
+    AddEditStudentWindow->>AddEditStudentController: handle_save(data)
+    AddEditStudentController->>Repository: add(student)
+    Repository->>Repository: save_data()
+    Repository->>ApplicationController: notify_observers()
+    ApplicationController->>Repository: get_k_n_short_list(k, n, sort_field, sort_order)
+    Repository-->>ApplicationController: return students[]
+    ApplicationController->>MainWindow: update_students(students, total_items)
+    MainWindow-->>User: update UI
+    AddEditStudentWindow-->>User: destroy()
+    end
+ 
+    %% Редактирование студента
+    rect rgb(240, 240, 200)
+    Note over User,DetailsWindow: Редактирование студента
+    User->>MainWindow: select student
+    User->>MainWindow: click edit_button
+    MainWindow->>ApplicationController: handle_edit()
+    ApplicationController->>Repository: get_by_id(student_id)
+    Repository-->>ApplicationController: return student
+    ApplicationController->>+AddEditStudentWindow: AddEditStudentWindow(parent, is_edit=True)
+    ApplicationController->>+AddEditStudentController: AddEditStudentController(view, repository_adapter, student)
+    AddEditStudentWindow->>AddEditStudentWindow: set_student_data(student)
+    AddEditStudentWindow-->>User: display form
+    User->>AddEditStudentWindow: modify data
+    User->>AddEditStudentWindow: click save_button
+    AddEditStudentWindow->>AddEditStudentController: handle_save(data)
+    AddEditStudentController->>Repository: update_by_id(student_id, student)
+    Repository->>Repository: save_data()
+    Repository->>ApplicationController: notify_observers()
+    ApplicationController->>Repository: get_k_n_short_list(k, n, sort_field, sort_order)
+    Repository-->>ApplicationController: return students[]
+    ApplicationController->>MainWindow: update_students(students, total_items)
+    MainWindow-->>User: update UI
+    AddEditStudentWindow-->>User: destroy()
+    end
+ 
+    %% Просмотр деталей
+    rect rgb(230, 230, 200)
+    Note over User,DetailsWindow: Просмотр деталей студента
+    User->>MainWindow: select student
+    User->>MainWindow: click view_button
+    MainWindow->>ApplicationController: handle_view()
+    ApplicationController->>Repository: get_by_id(student_id)
+    Repository-->>ApplicationController: return student
+    ApplicationController->>+DetailsWindow: studentDetailsWindow(parent)
+    ApplicationController->>+StudentDetailsController: studentstudentDetailsController(view, student)
+    StudentDetailsController->>DetailsWindow: display_student(student)
+    DetailsWindow-->>User: display details
+    User->>DetailsWindow: click close_button
+    DetailsWindow-->>User: destroy()
+    end
+ 
+    %% Удаление студента
+    rect rgb(220, 220, 200)
+    Note over User,DetailsWindow: Удаление студента
+    User->>MainWindow: select student
+    User->>MainWindow: click delete_button
+    MainWindow->>ApplicationController: handle_delete()
+    ApplicationController->>MainWindow: show_confirmation("Are you sure...")
+    MainWindow-->>User: messagebox.askyesno()
+    User->>MainWindow: confirm
+    MainWindow->>ApplicationController: return True
+    ApplicationController->>Repository: student_delete_by_id(student_id)
+    Repository->>Repository: save_data()
+    Repository->>ApplicationController: notify_observers()
+    ApplicationController->>Repository: get_k_n_short_list(k, n, sort_field, sort_order)
+    Repository-->>ApplicationController: return students[]
+    ApplicationController->>MainWindow: update_students(students, total_items)
+    MainWindow-->>User: update UI
+    end
+ 
+    %% Сортировка
+    rect rgb(200, 200, 200)
+    Note over User,DetailsWindow: Сортировка студентов
+    User->>MainWindow: select sort_combobox
+    MainWindow->>ApplicationController: handle_sort(event)
+    ApplicationController->>Repository: get_k_n_short_list(k, n, sort_field, sort_order)
+    Repository-->>ApplicationController: return students[]
+    ApplicationController->>MainWindow: update_students(students, total_items)
+    MainWindow-->>User: update UI
+    end
