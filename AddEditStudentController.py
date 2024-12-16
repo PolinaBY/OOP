@@ -26,7 +26,7 @@ class AddEditStudentController:
                 patronymic=data['patronymic_entry'],
                 phone=data['phone_entry']
             )
-            if self.product:
+            if self.student:
                 self.repository_adapter.update_by_id(self.student.student_id, updated_student)
             else:  # Создание нового
                 self.repository_adapter.add(updated_product)
