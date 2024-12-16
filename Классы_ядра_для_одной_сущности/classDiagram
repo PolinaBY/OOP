@@ -1,6 +1,6 @@
 classDiagram
     class StudentBase {
-         -student_id: int
+        -student_id: int
         -first_name: str
         -last_name: str
         -patronymic: str
@@ -62,22 +62,22 @@ classDiagram
         + save_data()
         + get_all() list
         + get_by_id(int student_id) dict
-        + add_student(dict student)
+        + add(dict student)
         + delete_by_id(int student_id)
-        + replace_by_id(int student_id, dict updates)
-        + get_k_n_short_list(int k, int n) list~StudentBrief~
-        + sort_by_field(str field, bool reverse) List~Product~
+        + update_by_id(int student_id, dict updates)
+        + get_k_n_short_list(int k, int n, str sort_field, str sort_order) list~StudentBrief~
         + get_count() int
     }
 
     class StudentAdapter {
         - StudentRepBase student_rep_base
-        + get_k_n_short_list(int k, int n)
+        + get_k_n_short_list(int k, int n, str sort_field, str sort_order)
         + get_by_id(int student_id)
         + delete_by_id(int student_id)
         + update_by_id(int student_id, dict updates)
         + add(dict student)
         + get_count() int
+        + add_observer(observer: Observer)
     }
 
     class DBConnection {
@@ -90,9 +90,9 @@ classDiagram
     class StudentRepDB {
         - DBConnection db_connection
         + get_by_id(int student_id) dict
-        + get_k_n_short_list(int k, int n) list
-        + add_student(Student student) int
-        + replace_by_id(int student_id, dict updates)
+        + get_k_n_short_list(int k, int n, str sort_field, str sort_order) list
+        + add(Student student) int
+        + update_by_id(int student_id, dict updates)
         + delete_by_id(int student_id)
         + get_count() int
     }
@@ -113,7 +113,7 @@ classDiagram
 
     %% Main classes
     class ApplicationController {
-        -repository: Adapter
+        -repository: StudentAdapter
         -main_window: MainWindow
         -_current_sort_field: str
         -_current_sort_order: str
@@ -133,26 +133,45 @@ classDiagram
         -total_pages: int
         +tree: Treeview
         +student_code_to_id: dict
+        +sort_combobox: Combobox
         +set_add_command(command)
         +set_edit_command(command)
         +set_delete_command(command)
         +set_view_command(command)
-        +update_student(student, total_items)
+        +set_sort_command(command)
+         +set_page_callback(command)
+        +update_students(students, total_items)
+        +show_error(message)
+        +show_confirmation(message)
     }
 
-    class AddEditStudentWindow {
-        -entries: dict
+   class AddStudentWindow {
+         -entries: dict
         -_save_command: function
         +set_save_command(command)
         +get_student_data()
-        +set_student_data(student)
-        +show_error(message)
+       +show_error(message)
     }
 
-    class AddEditStudentController {
-        -view: AddEditStudenttWindow
+    class EditStudentWindow {
+        -entries: dict
+        -_save_command: function
+         +set_save_command(command)
+        +get_student_data()
+        +set_student_data(student)
+       +show_error(message)
+    }
+
+    class AddStudentController {
+        -view: AddStudentWindow
         -repository_adapter: StudentAdapter
-        -student: Student
+        +handle_save(data)
+    }
+
+    class EditStudentController {
+        -view: EditStudentWindow
+        -repository_adapter: StudentAdapter
+         -student: Student
         +handle_save(data)
     }
 
@@ -166,30 +185,31 @@ classDiagram
         +display_student()
     }
 
-    Student --|> StudentBase
-    StudentBrief --|> StudentBase
+    Student  --|> StudentBase
+    StudentBrief  --|> StudentBase
     StudentRepJson --> StudentStrategy
     StudentRepYaml --> StudentStrategy
-    StudentRepBase o-- StudentStrategy 
+    StudentRepBase o-- StudentStrategy
     StudentAdapter o-- StudentRepBase
-    StudentRepDB *-- DBConnection
-
-    Observer <|-- ApplicationController 
-    Observable <|-- StudentAdapter 
-    Observable <|-- StudentRepDB
-    ApplicationController *-- MainWindow 
-    ApplicationController --> StudentAdapter 
-    ApplicationController --> StudentRepDB
-    ApplicationController *-- AddEditStudentController
+        StudentRepDB *-- DBConnection
+    Observer <|-- ApplicationController
+    Observable <|-- StudentAdapter
+     Observable <|-- StudentRepBase
+        ApplicationController *-- MainWindow
+    ApplicationController --> StudentAdapter
+       ApplicationController --> StudentRepDB
+    ApplicationController *-- AddStudentController
+    ApplicationController *-- EditStudentController
     ApplicationController *-- StudentDetailsController
 
-    AddEditStudentController *-- AddEditStudentWindow
-    AddEditStudentController ..> StudentAdapter
-    AddEditStudentController ..> StudentRepDB
-    AddEditStudentController o-- Student
+    AddStudentController *-- AddStudentWindow
+    EditStudentController *-- EditStudentWindow
+    AddStudentController ..> StudentAdapter
+     EditStudentController ..> StudentAdapter
+     EditStudentController o-- Student
 
-    StudentDetailsController *-- StudentDetailsWindow
+     StudentDetailsController *-- StudentDetailsWindow
     StudentDetailsController o-- Student
- 
-    StudentRepDB o-- DBConnection
-    
+        StudentDetailsWindow --|> MainWindow
+        AddStudentWindow --|> MainWindow
+        EditStudentWindow --|> MainWindow
