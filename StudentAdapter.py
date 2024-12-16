@@ -21,7 +21,7 @@ class StudentAdapter(Observable):
         
     def update_by_id(self, student_id, updates: dict):
         self._student_rep_base.replace_by_id(student_id, updates)
-        self._product_repository.load_data()
+        self._student_rep_base.load_data()
         self.notify_observers()
 
     def add(self, student: dict):
