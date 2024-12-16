@@ -116,5 +116,5 @@ class StudentRepBase(ABC):
         return len(self.data)
 
     def get_all_students(self) -> List[Student]:
-        """Получить все продукты"""
+        """Получить всех студентов"""
         return [Student.create_from_dict(student) for student in self._data]
