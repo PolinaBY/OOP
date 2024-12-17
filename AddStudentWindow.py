@@ -42,7 +42,11 @@ class AddStudentWindow(tk.Toplevel):
         self.save_button.pack(side=tk.LEFT, padx=5)
         self.cancel_button = ttk.Button(button_frame, text="Отмена", command=self.destroy)
         self.cancel_button.pack(side=tk.LEFT, padx=5)
-      
+
+
+    def set_controller(self, controller):
+          self.controller = controller
+
     def set_save_command(self, command):
         """Установка команды для кнопки сохранения"""
         self._save_command = command
@@ -56,8 +60,8 @@ class AddStudentWindow(tk.Toplevel):
               
     def on_save(self):
         """Обработка нажатия кнопки сохранения"""
-        if hasattr(self, '_save_command'):
-            self._save_command(self.get_student_data())
+        if self.controller:
+            self.controller.handle_save(self.get_student_data())
           
     def show_error(self, message):
         """Отображение сообщения об ошибке"""
