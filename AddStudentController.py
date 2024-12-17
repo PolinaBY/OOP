@@ -10,7 +10,7 @@ class AddStudentController:
     def __init__(self, view: AddStudentWindow, repository_adapter: StudentAdapter):
         self.view = view
         self.repository_adapter = repository_adapter
-        self.view.set_save_command(self.handle_save)
+        self.view.set_controller(self)
 
     def handle_save(self, data):
         try:
